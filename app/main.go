@@ -152,6 +152,17 @@ func (h *DNSHeader) Parse(data []byte) error {
 	}
 
 	h.ID = uint16(data[0])<<8 | uint16(data[1])
+
+	h.QR = data[2] >> 7
+	h.OPCODE = (data[2] >> 3) & 0x0F
+	h.AA = (data[2] >> 2) & 0x01
+	h.TC = (data[2] >> 1) & 0x01
+	h.RD = data[2] & 0x01
+
+	h.RA = data[3] >> 7
+	h.Z = (data[3] >> 4) & 0x07
+	h.RCODE = data[3] & 0x0F
+
 	h.QDCount = uint16(data[4])<<8 | uint16(data[5])
 	h.ANCount = uint16(data[6])<<8 | uint16(data[7])
 	h.NSCount = uint16(data[8])<<8 | uint16(data[9])
