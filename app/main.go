@@ -54,6 +54,7 @@ func TestMessage() DNSMessage {
 			ID:      1234,
 			QR:      1,
 			QDCount: 1,
+			ANCount: 1,
 		},
 		Question: DNSQuestion{
 			QNAME:  "codecrafters.io",
@@ -66,7 +67,7 @@ func TestMessage() DNSMessage {
 			Class:    1,
 			TTL:      60,
 			RDLenght: 4,
-			RDATA:    []byte{127, 0, 0, 1},
+			RDATA:    []byte{8, 8, 8, 8},
 		},
 	}
 }
