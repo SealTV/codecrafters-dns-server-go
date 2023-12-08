@@ -46,7 +46,7 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("Parces Message: %+v\v", in)
+		fmt.Printf("Parces Message: %+v\n", in)
 
 		msg := MakerResponse(in)
 		_, err = udpConn.WriteToUDP(msg.Serialize(), source)
