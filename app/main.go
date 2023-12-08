@@ -39,8 +39,14 @@ func main() {
 
 		receivedData := string(buf[:size])
 		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
+		in := DNSMessage{}
+		err = in.Parse(buf[:size])
+		if err != nil {
+			fmt.Println("Failed to parse message:", err)
+			continue
+		}
 
-		msg := TestMessage()
+		msg := MakerResponse(in)
 		_, err = udpConn.WriteToUDP(msg.Serialize(), source)
 		if err != nil {
 			fmt.Println("Failed to send response:", err)
@@ -48,11 +54,23 @@ func main() {
 	}
 }
 
-func TestMessage() DNSMessage {
+func MakerResponse(in DNSMessage) DNSMessage {
+	rcode := byte(0)
+	if in.Header.OPCODE != 0 {
+		rcode = 4
+	}
+
 	return DNSMessage{
 		Header: DNSHeader{
-			ID:      1234,
+			ID:      in.Header.ID,
 			QR:      1,
+			OPCODE:  in.Header.OPCODE,
+			AA:      0,
+			TC:      0,
+			RD:      in.Header.RD,
+			RA:      0,
+			Z:       0,
+			RCODE:   rcode,
 			QDCount: 1,
 			ANCount: 1,
 		},
@@ -87,6 +105,25 @@ func (m *DNSMessage) Serialize() []byte {
 	result = append(result, m.Answer.Serialize()...)
 
 	return result
+}
+
+func (m *DNSMessage) Parse(data []byte) error {
+	err := m.Header.Parse(data)
+	if err != nil {
+		return err
+	}
+
+	err = m.Question.Parse(data)
+	if err != nil {
+		return err
+	}
+
+	err = m.Answer.Parse(data)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type DNSHeader struct {
