@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 	// Uncomment this block to pass the first stage
 	// "net"
 )
@@ -41,8 +42,14 @@ func main() {
 
 		msg := DNSMessage{
 			Header: DNSHeader{
-				ID: 1234,
-				QR: 1,
+				ID:      1234,
+				QR:      1,
+				QDCount: 1,
+			},
+			Question: DNSQuestion{
+				QNAME:  "codecrafters.io",
+				QTYPE:  1,
+				QCLASS: 1,
 			},
 		}
 
@@ -65,14 +72,12 @@ type DNSMessage struct {
 func (m *DNSMessage) Serialize() []byte {
 	result := m.Header.Serialize()
 
-	//TODO: Add question and answer sections
+	result = append(result, m.Question.Serialize()...)
+
+	result = append(result, m.Answer.Serialize()...)
 
 	return result
 }
-
-type DNSQuestion struct{}
-
-type DNSAnswer struct{}
 
 type DNSHeader struct {
 	ID      uint16 // A random ID assigned to query packets. Response packets must reply with the same ID.
@@ -126,4 +131,42 @@ func (h *DNSHeader) Serialize() []byte {
 	data[11] = byte(h.ARCount)
 
 	return data
+}
+
+type DNSQuestion struct {
+	QNAME  string // The domain name to query.
+	QTYPE  uint16 // The type of the query.
+	QCLASS uint16 // The class of the query.
+}
+
+func (q *DNSQuestion) Parse(data []byte) error {
+	return nil
+}
+
+func (q *DNSQuestion) Serialize() []byte {
+	labels := strings.Split(q.QNAME, ".")
+
+	result := make([]byte, 0, len(q.QNAME)+4)
+
+	for _, label := range labels {
+		result = append(result, byte(len(label)))
+		result = append(result, []byte(label)...)
+	}
+
+	result = append(result, 0)
+
+	result = append(result, byte(q.QTYPE>>8), byte(q.QTYPE))
+	result = append(result, byte(q.QCLASS>>8), byte(q.QCLASS))
+
+	return result
+}
+
+type DNSAnswer struct{}
+
+func (a *DNSAnswer) Parse(data []byte) error {
+	return nil
+}
+
+func (a *DNSAnswer) Serialize() []byte {
+	return []byte{}
 }
