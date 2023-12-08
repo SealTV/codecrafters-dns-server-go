@@ -40,25 +40,34 @@ func main() {
 		receivedData := string(buf[:size])
 		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
 
-		msg := DNSMessage{
-			Header: DNSHeader{
-				ID:      1234,
-				QR:      1,
-				QDCount: 1,
-			},
-			Question: DNSQuestion{
-				QNAME:  "codecrafters.io",
-				QTYPE:  1,
-				QCLASS: 1,
-			},
-		}
-
-		response := msg.Serialize()
-
-		_, err = udpConn.WriteToUDP(response, source)
+		msg := TestMessage()
+		_, err = udpConn.WriteToUDP(msg.Serialize(), source)
 		if err != nil {
 			fmt.Println("Failed to send response:", err)
 		}
+	}
+}
+
+func TestMessage() DNSMessage {
+	return DNSMessage{
+		Header: DNSHeader{
+			ID:      1234,
+			QR:      1,
+			QDCount: 1,
+		},
+		Question: DNSQuestion{
+			QNAME:  "codecrafters.io",
+			QTYPE:  1,
+			QCLASS: 1,
+		},
+		Answer: DNSAnswer{
+			Name:     "codecrafters.io",
+			Type:     1,
+			Class:    1,
+			TTL:      60,
+			RDLenght: 4,
+			RDATA:    []byte{127, 0, 0, 1},
+		},
 	}
 }
 
@@ -161,12 +170,37 @@ func (q *DNSQuestion) Serialize() []byte {
 	return result
 }
 
-type DNSAnswer struct{}
+type DNSAnswer struct {
+	Name     string // The domain name encoded as a sequence of labels.
+	Type     uint16 // The type of the resource record. 1 for an A record, 5 for a CNAME record etc., full list here
+	Class    uint16 // The class of the resource record. 1 for an internet address, full list here. Usually set to 1 (full list here)
+	TTL      uint32 // The duration in seconds a record can be cached before requerying.
+	RDLenght uint16 // The length of the RDATA field in bytes.
+	RDATA    []byte // The data specific to the record type.
+}
 
 func (a *DNSAnswer) Parse(data []byte) error {
 	return nil
 }
 
 func (a *DNSAnswer) Serialize() []byte {
-	return []byte{}
+	labels := strings.Split(a.Name, ".")
+
+	result := make([]byte, 0, len(a.Name)+10+int(a.RDLenght))
+
+	for _, label := range labels {
+		result = append(result, byte(len(label)))
+		result = append(result, []byte(label)...)
+	}
+
+	result = append(result, 0)
+
+	result = append(result, byte(a.Type>>8), byte(a.Type))
+	result = append(result, byte(a.Class>>8), byte(a.Class))
+	result = append(result, byte(a.TTL>>24), byte(a.TTL>>16), byte(a.TTL>>8), byte(a.TTL))
+	result = append(result, byte(a.RDLenght>>8), byte(a.RDLenght))
+
+	result = append(result, a.RDATA...)
+
+	return result
 }
