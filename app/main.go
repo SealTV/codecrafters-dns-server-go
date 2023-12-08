@@ -79,12 +79,12 @@ func MakerResponse(in DNSMessage) DNSMessage {
 			ARCount: 0,
 		},
 		Question: DNSQuestion{
-			QNAME:  "codecrafters.io",
+			QNAME:  in.Question.QNAME,
 			QTYPE:  1,
 			QCLASS: 1,
 		},
 		Answer: DNSAnswer{
-			Name:     "codecrafters.io",
+			Name:     in.Question.QNAME,
 			Type:     1,
 			Class:    1,
 			TTL:      60,
@@ -209,9 +209,9 @@ func (q *DNSQuestion) Parse(data []byte) (int, error) {
 	labels := []string{}
 	for length > 0 {
 		label := data[offset : offset+length]
-		offset += length
+		offset += len(label)
 
-		length = int(data[offset+length])
+		length = int(data[offset])
 		offset++
 
 		labels = append(labels, string(label))
