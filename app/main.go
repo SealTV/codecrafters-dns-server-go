@@ -143,7 +143,7 @@ type DNSHeader struct {
 }
 
 func (h *DNSHeader) Parse(data []byte) error {
-	if len(data) != 12 {
+	if len(data) < 12 {
 		return fmt.Errorf("Not enough data to parse header")
 	}
 
