@@ -84,7 +84,7 @@ func MakerResponse(in DNSMessage) DNSMessage {
 			QCLASS: 1,
 		},
 		Answer: DNSAnswer{
-			Name:     in.Question.QNAME,
+			Name:     in.Question.QNAME[0],
 			Type:     1,
 			Class:    1,
 			TTL:      60,
@@ -117,7 +117,7 @@ func (m *DNSMessage) Parse(data []byte) error {
 		return err
 	}
 
-	n, err = m.Question.Parse(data[n:])
+	n, err = m.Question.Parse(data[n:], m.Header.QDCount)
 	if err != nil {
 		return err
 	}
@@ -196,28 +196,30 @@ func (h *DNSHeader) Serialize() []byte {
 }
 
 type DNSQuestion struct {
-	QNAME  string // The domain name to query.
-	QTYPE  uint16 // The type of the query.
-	QCLASS uint16 // The class of the query.
+	QNAME  []string // The domain name to query.
+	QTYPE  uint16   // The type of the query.
+	QCLASS uint16   // The class of the query.
 }
 
-func (q *DNSQuestion) Parse(data []byte) (int, error) {
+func (q *DNSQuestion) Parse(data []byte, qnames uint16) (int, error) {
 	offset := 0
 	length := int(data[offset])
 	offset++
 
-	labels := []string{}
-	for length > 0 {
-		label := data[offset : offset+length]
-		offset += len(label)
+	for i := uint16(0); i < qnames; i++ {
+		labels := []string{}
+		for length > 0 {
+			label := data[offset : offset+length]
+			offset += len(label)
 
-		length = int(data[offset])
-		offset++
+			length = int(data[offset])
+			offset++
 
-		labels = append(labels, string(label))
+			labels = append(labels, string(label))
+		}
+
+		q.QNAME = append(q.QNAME, strings.Join(labels, "."))
 	}
-
-	q.QNAME = strings.Join(labels, ".")
 
 	q.QTYPE = uint16(data[offset+length])<<8 | uint16(data[offset+length+1])
 	offset += 2
@@ -229,16 +231,18 @@ func (q *DNSQuestion) Parse(data []byte) (int, error) {
 }
 
 func (q *DNSQuestion) Serialize() []byte {
-	labels := strings.Split(q.QNAME, ".")
+	result := make([]byte, 0)
 
-	result := make([]byte, 0, len(q.QNAME)+4)
+	for _, QNAME := range q.QNAME {
+		labels := strings.Split(QNAME, ".")
 
-	for _, label := range labels {
-		result = append(result, byte(len(label)))
-		result = append(result, []byte(label)...)
+		for _, label := range labels {
+			result = append(result, byte(len(label)))
+			result = append(result, []byte(label)...)
+		}
+
+		result = append(result, 0)
 	}
-
-	result = append(result, 0)
 
 	result = append(result, byte(q.QTYPE>>8), byte(q.QTYPE))
 	result = append(result, byte(q.QCLASS>>8), byte(q.QCLASS))

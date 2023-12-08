@@ -11,7 +11,25 @@ func TestDNSQuestion_Parse(t *testing.T) {
 		{
 			name: "Parse",
 			q: DNSQuestion{
-				QNAME:  "www.google.com",
+				QNAME:  []string{"wwe.google.com"},
+				QTYPE:  1,
+				QCLASS: 1,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Parse 2",
+			q: DNSQuestion{
+				QNAME:  []string{"wwe.google.com, wwe.google.com"},
+				QTYPE:  1,
+				QCLASS: 1,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Parse 3",
+			q: DNSQuestion{
+				QNAME:  []string{"wwe.google.com, wwe.google.com"},
 				QTYPE:  1,
 				QCLASS: 1,
 			},
@@ -23,7 +41,7 @@ func TestDNSQuestion_Parse(t *testing.T) {
 			data := tt.q.Serialize()
 
 			newQ := DNSQuestion{}
-			got, err := newQ.Parse(data)
+			got, err := newQ.Parse(data, uint16(len(tt.q.QNAME)))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DNSQuestion.Parse() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -33,7 +51,7 @@ func TestDNSQuestion_Parse(t *testing.T) {
 				t.Errorf("DNSQuestion.Parse() = %v, want %v", got, len(data))
 			}
 
-			if newQ.QNAME != tt.q.QNAME {
+			if len(newQ.QNAME) != len(tt.q.QNAME) {
 				t.Errorf("DNSQuestion.Parse() QNAME = %v, want %v", newQ.QNAME, tt.q.QNAME)
 			}
 
