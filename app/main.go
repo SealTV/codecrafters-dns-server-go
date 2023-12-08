@@ -46,6 +46,8 @@ func main() {
 			continue
 		}
 
+		fmt.Printf("Parces Message: %+v\v", in)
+
 		msg := MakerResponse(in)
 		_, err = udpConn.WriteToUDP(msg.Serialize(), source)
 		if err != nil {
@@ -73,6 +75,8 @@ func MakerResponse(in DNSMessage) DNSMessage {
 			RCODE:   rcode,
 			QDCount: 1,
 			ANCount: 1,
+			NSCount: 0,
+			ARCount: 0,
 		},
 		Question: DNSQuestion{
 			QNAME:  "codecrafters.io",
