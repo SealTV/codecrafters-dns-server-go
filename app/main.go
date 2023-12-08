@@ -112,17 +112,17 @@ func (m *DNSMessage) Serialize() []byte {
 }
 
 func (m *DNSMessage) Parse(data []byte) error {
-	err := m.Header.Parse(data)
+	n, err := m.Header.Parse(data)
 	if err != nil {
 		return err
 	}
 
-	err = m.Question.Parse(data)
+	n, err = m.Question.Parse(data[n:])
 	if err != nil {
 		return err
 	}
 
-	err = m.Answer.Parse(data)
+	_, err = m.Answer.Parse(data[n:])
 	if err != nil {
 		return err
 	}
@@ -146,9 +146,9 @@ type DNSHeader struct {
 	ARCount uint16 // The number of resource records in the additional records section.
 }
 
-func (h *DNSHeader) Parse(data []byte) error {
+func (h *DNSHeader) Parse(data []byte) (int, error) {
 	if len(data) < 12 {
-		return fmt.Errorf("Not enough data to parse header")
+		return 0, fmt.Errorf("Not enough data to parse header")
 	}
 
 	h.ID = uint16(data[0])<<8 | uint16(data[1])
@@ -168,7 +168,7 @@ func (h *DNSHeader) Parse(data []byte) error {
 	h.NSCount = uint16(data[8])<<8 | uint16(data[9])
 	h.ARCount = uint16(data[10])<<8 | uint16(data[11])
 
-	return nil
+	return 12, nil
 }
 
 func (h *DNSHeader) Serialize() []byte {
@@ -201,8 +201,31 @@ type DNSQuestion struct {
 	QCLASS uint16 // The class of the query.
 }
 
-func (q *DNSQuestion) Parse(data []byte) error {
-	return nil
+func (q *DNSQuestion) Parse(data []byte) (int, error) {
+	offset := 0
+	length := int(data[offset])
+	offset++
+
+	labels := []string{}
+	for length > 0 {
+		label := data[offset : offset+length]
+		offset += length
+
+		length = int(data[offset+length])
+		offset++
+
+		labels = append(labels, string(label))
+	}
+
+	q.QNAME = strings.Join(labels, ".")
+
+	q.QTYPE = uint16(data[offset+length])<<8 | uint16(data[offset+length+1])
+	offset += 2
+
+	q.QCLASS = uint16(data[offset+length])<<8 | uint16(data[offset+length+1])
+	offset += 2
+
+	return offset, nil
 }
 
 func (q *DNSQuestion) Serialize() []byte {
@@ -232,8 +255,8 @@ type DNSAnswer struct {
 	RDATA    []byte // The data specific to the record type.
 }
 
-func (a *DNSAnswer) Parse(data []byte) error {
-	return nil
+func (a *DNSAnswer) Parse(data []byte) (int, error) {
+	return 0, nil
 }
 
 func (a *DNSAnswer) Serialize() []byte {
