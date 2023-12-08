@@ -37,8 +37,8 @@ func main() {
 			break
 		}
 
-		receivedData := string(buf[:size])
-		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
+		fmt.Printf("Received %d bytes from %s: %v\n", size, source, buf[:size])
+
 		in := DNSMessage{}
 		err = in.Parse(buf[:size])
 		if err != nil {
