@@ -46,8 +46,6 @@ func (questions *DBSQuestions) Serialize(buf *bytes.Buffer) error {
 		buf.WriteByte(byte(q.QClass))
 	}
 
-	// fmt.Println("Hash:", hash)
-
 	return nil
 }
 
