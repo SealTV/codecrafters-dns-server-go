@@ -1,25 +1,22 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net"
 
 	"github.com/codecrafters-io/dns-server-starter-go/app/types"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
 
-func init() {
-	pflag.String("resolver", "8.8.8.8:53", "Listen address")
-
-	pflag.Parse()
-	_ = viper.BindPFlags(pflag.CommandLine)
-	viper.AutomaticEnv()
-}
+var (
+	resloveAddr = flag.String("resolver", "8.8.8.8:53", "Listen address")
+)
 
 func main() {
-	resolver, err := GetDNSResolver(viper.GetString("resolver"))
+	flag.Parse()
+
+	resolver, err := GetDNSResolver(*resloveAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
