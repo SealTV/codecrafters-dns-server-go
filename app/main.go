@@ -38,7 +38,7 @@ func main() {
 			break
 		}
 
-		// fmt.Printf("Received %d bytes from %s: %v\n", size, source, buf[:size])
+		fmt.Printf("Received %d bytes from %s: %v\n", size, source, buf[:size])
 
 		in := types.DNSMessage{}
 		err = in.Parse(buf[:size])
@@ -47,7 +47,7 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("Parsed Message: %+v, \n bytes: %+v\n", in, buf[:size])
+		fmt.Printf("Parsed Message: %+v, \n \n", in)
 
 		msg := MakerResponse(in)
 		_, err = udpConn.WriteToUDP(msg.Serialize(), source)
