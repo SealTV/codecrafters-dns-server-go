@@ -73,6 +73,7 @@ func MakerResponse(resolver *dnsResolver, in types.DNSMessage) types.DNSMessage 
 		var err error
 		answers, err = resolver.ResolveAddress(questions)
 		if err != nil {
+			log.Printf("error on resolve address: %v", err)
 			rcode = types.SERVFAIL
 		}
 	}
