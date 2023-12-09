@@ -78,7 +78,7 @@ func MakerResponse(resolver *dnsResolver, in types.DNSMessage) types.DNSMessage 
 
 	if rcode == types.NOERROR {
 		var err error
-		answers, err = resolver.ResolveAddress(questions)
+		answers, err = resolver.ResolveAddress(in)
 		if err != nil {
 			log.Printf("error on resolve address: %v", err)
 			rcode = types.SERVFAIL
@@ -126,17 +126,7 @@ func GetDNSResolver(resolverAddr string) (*dnsResolver, error) {
 	}, nil
 }
 
-func (dnsr *dnsResolver) ResolveAddress(quesions types.DBSQuestions) ([]types.DNSAnswer, error) {
-	msg := types.DNSMessage{
-		Header: types.DNSHeader{
-			ID:      1,
-			OPCODE:  types.QUERY,
-			RD:      1,
-			QDCount: uint16(len(quesions)),
-		},
-		Questions: quesions,
-	}
-
+func (dnsr *dnsResolver) ResolveAddress(msg types.DNSMessage) ([]types.DNSAnswer, error) {
 	log.Printf("Trying to resolve addresses: %+v", msg)
 
 	_, err := dnsr.conn.Write(msg.Serialize())
