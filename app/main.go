@@ -38,7 +38,7 @@ func main() {
 			break
 		}
 
-		fmt.Printf("Received %d bytes from %s: %v\n", size, source, buf[:size])
+		// fmt.Printf("Received %d bytes from %s: %v\n", size, source, buf[:size])
 
 		in := types.DNSMessage{}
 		err = in.Parse(buf[:size])
@@ -47,7 +47,7 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("Parces Message: %+v\n", in)
+		fmt.Printf("Parced Message: %+v\n", in)
 
 		msg := MakerResponse(in)
 		_, err = udpConn.WriteToUDP(msg.Serialize(), source)
@@ -60,7 +60,7 @@ func main() {
 func MakerResponse(in types.DNSMessage) types.DNSMessage {
 	rcode := types.NOERROR
 
-	if in.Header.OPCODE != types.IQUERY {
+	if in.Header.OPCODE != types.QUERY {
 		rcode = types.NOTIMP
 	}
 

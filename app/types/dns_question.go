@@ -75,8 +75,6 @@ func (questions *DBSQuestions) Parse(count uint16, data []byte, offset int) (int
 
 			labels = append(labels, string(label))
 			hash[uint16(position)] = string(label)
-			fmt.Println("HASH:", hash)
-			fmt.Println("--")
 		}
 
 		q.QName = strings.Join(labels, ".")

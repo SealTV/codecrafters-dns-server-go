@@ -42,7 +42,7 @@ func (m *DNSMessage) Parse(data []byte) error {
 		return fmt.Errorf("cannot parse questions: %w", err)
 	}
 
-	fmt.Printf("QUSTIONS: %+v\n", m.Questions)
+	// fmt.Printf("QUSTIONS: %+v\n", m.Questions)
 
 	for i := uint16(0); i < m.Header.ANCount; i++ {
 		a := DNSAnswer{}
