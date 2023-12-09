@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 )
 
@@ -12,17 +11,23 @@ func (questions *DBSQuestions) Serialize(buf *bytes.Buffer) error {
 	hash := map[string]uint16{}
 
 	for _, q := range *questions {
-		for _, label := range strings.Split(q.QName, ".") {
+		labels := strings.Split(q.QName, ".")
+		name := q.QName
+
+		for i := range labels {
+			label := labels[i]
 			position := buf.Len()
 
-			if p, ok := hash[label]; !ok {
-				hash[label] = uint16(position)
-
+			if p, ok := hash[name]; !ok {
 				buf.WriteByte(byte(len(label)))
 				buf.WriteString(label)
+
+				hash[name] = uint16(position)
+				name = strings.Join(labels[i+1:], ".")
 			} else {
 				buf.WriteByte(byte(3)<<6 | byte(p>>8))
 				buf.WriteByte(byte(p))
+				break
 			}
 		}
 
@@ -35,19 +40,17 @@ func (questions *DBSQuestions) Serialize(buf *bytes.Buffer) error {
 		buf.WriteByte(byte(q.QClass))
 	}
 
+	// fmt.Println("Hash:", hash)
+
 	return nil
 }
 
 func (questions *DBSQuestions) Parse(count uint16, data []byte, offset int) (int, error) {
-	hash := map[uint16]string{}
-
 	for i := uint16(0); i < count; i++ {
 		q := DNSQuestion{}
 
 		labels := []string{}
 		for {
-			position := offset
-
 			b1 := data[offset]
 			offset++
 
@@ -55,11 +58,15 @@ func (questions *DBSQuestions) Parse(count uint16, data []byte, offset int) (int
 				targetPosition := uint16(b1&0x3F)<<8 | uint16(data[offset])
 				offset++
 
-				if label, ok := hash[targetPosition]; ok {
-					labels = append(labels, label)
-				} else {
-					return offset, fmt.Errorf("Unexpected index for compression string, for index: %v, known labels: %v", targetPosition, hash)
+				// fmt.Println("try to read compressed string from position:", targetPosition)
+				str, err := readCompressedString(data, int(targetPosition))
+				if err != nil {
+					return 0, err
 				}
+
+				// fmt.Println("read compressed string:", str)
+
+				labels = append(labels, str)
 
 				continue
 			}
@@ -74,7 +81,6 @@ func (questions *DBSQuestions) Parse(count uint16, data []byte, offset int) (int
 			offset += length
 
 			labels = append(labels, string(label))
-			hash[uint16(position)] = string(label)
 		}
 
 		q.QName = strings.Join(labels, ".")
@@ -89,6 +95,28 @@ func (questions *DBSQuestions) Parse(count uint16, data []byte, offset int) (int
 	}
 
 	return offset, nil
+}
+
+func readCompressedString(data []byte, offset int) (string, error) {
+	labels := []string{}
+	for {
+
+		b1 := data[offset]
+		offset++
+
+		length := int(b1)
+
+		if length == 0 {
+			break
+		}
+
+		label := data[offset : offset+length]
+		offset += length
+
+		labels = append(labels, string(label))
+	}
+
+	return strings.Join(labels, "."), nil
 }
 
 type DNSQuestion struct {

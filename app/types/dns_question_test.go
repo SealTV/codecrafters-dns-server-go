@@ -38,6 +38,28 @@ func TestDNSQuestion(t *testing.T) {
 			},
 			wantErr: false,
 		},
+
+		{
+			name: "Parse 3",
+			q: DBSQuestions{
+				{
+					QName:  "wwe.google.com",
+					QType:  QTYPE(A),
+					QClass: QCLASS(IN),
+				},
+				{
+					QName:  "www.yandex.com",
+					QType:  QTYPE(A),
+					QClass: QCLASS(IN),
+				},
+				{
+					QName:  "qwe.wwe.google.com",
+					QType:  QTYPE(A),
+					QClass: QCLASS(IN),
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
