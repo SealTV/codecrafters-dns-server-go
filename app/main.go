@@ -47,7 +47,7 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("Parced Message: %+v\n", in)
+		fmt.Printf("Parsed Message: %+v, \n bytes: %+v\n", in, buf[:size])
 
 		msg := MakerResponse(in)
 		_, err = udpConn.WriteToUDP(msg.Serialize(), source)
@@ -64,6 +64,8 @@ func MakerResponse(in types.DNSMessage) types.DNSMessage {
 		rcode = types.NOTIMP
 	}
 
+	questions := in.Questions
+
 	return types.DNSMessage{
 		Header: types.DNSHeader{
 			ID:      in.Header.ID,
@@ -75,7 +77,7 @@ func MakerResponse(in types.DNSMessage) types.DNSMessage {
 			RA:      0,
 			Z:       0,
 			RCODE:   rcode,
-			QDCount: 1,
+			QDCount: uint16(len(questions)),
 			ANCount: 1,
 			NSCount: 0,
 			ARCount: 0,
