@@ -65,6 +65,22 @@ func MakerResponse(in types.DNSMessage) types.DNSMessage {
 	}
 
 	questions := in.Questions
+	answers := []types.DNSAnswer{}
+
+	if rcode == types.NOERROR {
+		for _, q := range questions {
+			if q.QType == types.QTYPE(types.A) {
+				answers = append(answers, types.DNSAnswer{
+					Name:     q.QName,
+					Type:     types.A,
+					Class:    types.IN,
+					TTL:      60,
+					RDLenght: 4,
+					RDATA:    []byte{8, 8, 8, 8},
+				})
+			}
+		}
+	}
 
 	return types.DNSMessage{
 		Header: types.DNSHeader{
@@ -78,18 +94,11 @@ func MakerResponse(in types.DNSMessage) types.DNSMessage {
 			Z:       0,
 			RCODE:   rcode,
 			QDCount: uint16(len(questions)),
-			ANCount: 1,
+			ANCount: uint16(len(answers)),
 			NSCount: 0,
 			ARCount: 0,
 		},
 		Questions: questions,
-		Answers: []types.DNSAnswer{{
-			Name:     in.Questions[0].QName,
-			Type:     1,
-			Class:    1,
-			TTL:      60,
-			RDLenght: 4,
-			RDATA:    []byte{8, 8, 8, 8},
-		}},
+		Answers:   answers,
 	}
 }
