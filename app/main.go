@@ -137,6 +137,8 @@ func (dnsr *dnsResolver) ResolveAddress(quesions types.DBSQuestions) ([]types.DN
 		Questions: quesions,
 	}
 
+	log.Printf("Trying to resolve addresses: %+v", msg)
+
 	_, err := dnsr.conn.Write(msg.Serialize())
 	if err != nil {
 		return nil, fmt.Errorf("Cannot send message to local DNS server: %v", err)
@@ -153,6 +155,8 @@ func (dnsr *dnsResolver) ResolveAddress(quesions types.DBSQuestions) ([]types.DN
 	if err != nil {
 		return nil, fmt.Errorf("Cannot parse response from local DNS server: %v", err)
 	}
+
+	log.Printf("Got responce from DNS server: %+v", res)
 
 	if res.Header.RCODE != types.NOERROR {
 		return nil, fmt.Errorf("Local DNS server returned error: %v", res.Header.RCODE)
