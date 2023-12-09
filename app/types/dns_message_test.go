@@ -134,11 +134,36 @@ func TestDNSMessage(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Parse multiple questions with compression",
+			msg: DNSMessage{
+				Header: DNSHeader{
+					ID:      20152,
+					RD:      1,
+					QDCount: 2,
+					OPCODE:  QUERY,
+				},
+				Questions: []DNSQuestion{
+					{
+						QName:  "abc.longassdomainname.com",
+						QType:  QTYPE(IN),
+						QClass: QCLASS(A),
+					},
+					{
+						QName:  "def.longassdomainname.com",
+						QType:  QTYPE(IN),
+						QClass: QCLASS(A),
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			data := tt.msg.Serialize()
 
+			t.Log("data:", data)
 			newQ := DNSMessage{}
 			err := newQ.Parse(data)
 			if (err != nil) != tt.wantErr {

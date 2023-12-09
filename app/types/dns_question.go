@@ -14,6 +14,8 @@ func (questions *DBSQuestions) Serialize(buf *bytes.Buffer) error {
 		labels := strings.Split(q.QName, ".")
 		name := q.QName
 
+		commpessed := false
+
 		for i := range labels {
 			label := labels[i]
 			position := buf.Len()
@@ -27,11 +29,15 @@ func (questions *DBSQuestions) Serialize(buf *bytes.Buffer) error {
 			} else {
 				buf.WriteByte(byte(3)<<6 | byte(p>>8))
 				buf.WriteByte(byte(p))
+
+				commpessed = true
 				break
 			}
 		}
 
-		buf.WriteByte(0)
+		if !commpessed {
+			buf.WriteByte(0)
+		}
 
 		buf.WriteByte(byte(q.QType >> 8))
 		buf.WriteByte(byte(q.QType))
@@ -68,7 +74,7 @@ func (questions *DBSQuestions) Parse(count uint16, data []byte, offset int) (int
 
 				labels = append(labels, str)
 
-				continue
+				break
 			}
 
 			length := int(b1)
