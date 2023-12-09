@@ -82,11 +82,7 @@ func MakerResponse(in types.DNSMessage) types.DNSMessage {
 			NSCount: 0,
 			ARCount: 0,
 		},
-		Questions: []types.DNSQuestion{{
-			QName:  in.Questions[0].QName,
-			QType:  1,
-			QClass: 1,
-		}},
+		Questions: questions,
 		Answers: []types.DNSAnswer{{
 			Name:     in.Questions[0].QName,
 			Type:     1,

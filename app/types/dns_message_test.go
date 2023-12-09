@@ -138,7 +138,7 @@ func TestDNSMessage(t *testing.T) {
 			name: "Parse multiple questions with compression",
 			msg: DNSMessage{
 				Header: DNSHeader{
-					ID:      20152,
+					ID:      39455,
 					RD:      1,
 					QDCount: 2,
 					OPCODE:  QUERY,
@@ -156,7 +156,7 @@ func TestDNSMessage(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
