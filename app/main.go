@@ -6,10 +6,20 @@ import (
 	"net"
 
 	"github.com/codecrafters-io/dns-server-starter-go/app/types"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
+func init() {
+	pflag.String("resolver", "8.8.8.8:53", "Listen address")
+
+	pflag.Parse()
+	_ = viper.BindPFlags(pflag.CommandLine)
+	viper.AutomaticEnv()
+}
+
 func main() {
-	resolver, err := GetDNSResolver()
+	resolver, err := GetDNSResolver(viper.GetString("resolver"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -103,8 +113,8 @@ type dnsResolver struct {
 	conn net.Conn
 }
 
-func GetDNSResolver() (*dnsResolver, error) {
-	addr, err := net.ResolveUDPAddr("udp", "127.0.0.1:53")
+func GetDNSResolver(resolverAddr string) (*dnsResolver, error) {
+	addr, err := net.ResolveUDPAddr("udp", resolverAddr)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot resolve local DNS server address: %v", err)
 	}

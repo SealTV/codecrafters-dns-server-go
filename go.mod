@@ -10,4 +10,8 @@ module github.com/codecrafters-io/dns-server-starter-go
 
 go 1.16
 
-require github.com/google/go-cmp v0.6.0
+require (
+	github.com/google/go-cmp v0.6.0
+	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.18.1
+)
