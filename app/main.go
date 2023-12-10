@@ -128,6 +128,7 @@ func GetDNSResolver(resolverAddr string) (*dnsResolver, error) {
 }
 
 func (dnsr *dnsResolver) ResolveAddress(msg types.DNSMessage) ([]types.DNSAnswer, error) {
+	msg.Header.RD = 1
 	log.Printf("Trying to resolve addresses: %+v", msg)
 
 	_, err := dnsr.conn.Write(msg.Serialize())
