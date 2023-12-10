@@ -128,35 +128,61 @@ func GetDNSResolver(resolverAddr string) (*dnsResolver, error) {
 }
 
 func (dnsr *dnsResolver) ResolveAddress(msg types.DNSMessage) ([]types.DNSAnswer, error) {
-	msg.Header.RD = 1
-	log.Printf("Trying to resolve addresses: %+v", msg)
+	// log.Printf("Trying to resolve addresses: %+v", msg)
 
-	_, err := dnsr.conn.Write(msg.Serialize())
-	if err != nil {
-		return nil, fmt.Errorf("Cannot send message to local DNS server: %v", err)
+	result := []types.DNSAnswer{}
+
+	for _, q := range msg.Questions {
+		log.Printf("Trying to resolve address: %+v", q)
+
+		request := types.DNSMessage{
+			Header: types.DNSHeader{
+				ID:      msg.Header.ID,
+				QR:      0,
+				OPCODE:  msg.Header.OPCODE,
+				AA:      0,
+				TC:      0,
+				RD:      msg.Header.RD,
+				RA:      0,
+				Z:       0,
+				RCODE:   0,
+				QDCount: 1,
+				ANCount: 0,
+				NSCount: 0,
+				ARCount: 0,
+			},
+			Questions: []types.DNSQuestion{q},
+		}
+
+		_, err := dnsr.conn.Write(request.Serialize())
+		if err != nil {
+			return nil, fmt.Errorf("Cannot send message to local DNS server: %v", err)
+		}
+
+		buf := make([]byte, 512)
+		size, err := dnsr.conn.Read(buf)
+		if err != nil {
+			return nil, fmt.Errorf("Cannot read response from local DNS server: %v", err)
+		}
+
+		resp := types.DNSMessage{}
+		err = resp.Parse(buf[:size])
+		if err != nil {
+			return nil, fmt.Errorf("Cannot parse response from local DNS server: %v", err)
+		}
+
+		log.Printf("Got responce from DNS server: %+v -> \t for request: %+v", resp, request)
+
+		if resp.Header.RCODE != types.NOERROR {
+			return nil, fmt.Errorf("Local DNS server returned error: %v", resp.Header.RCODE)
+		}
+
+		if resp.Header.ANCount == 0 || len(resp.Answers) == 0 || resp.Header.ANCount != uint16(len(resp.Answers)) {
+			return nil, fmt.Errorf("Local DNS server returned no answers")
+		}
+
+		result = append(result, resp.Answers[0])
 	}
 
-	buf := make([]byte, 512)
-	size, err := dnsr.conn.Read(buf)
-	if err != nil {
-		return nil, fmt.Errorf("Cannot read response from local DNS server: %v", err)
-	}
-
-	resp := types.DNSMessage{}
-	err = resp.Parse(buf[:size])
-	if err != nil {
-		return nil, fmt.Errorf("Cannot parse response from local DNS server: %v", err)
-	}
-
-	log.Printf("Got responce from DNS server: %+v for request: %+v", resp, msg)
-
-	if resp.Header.RCODE != types.NOERROR {
-		return nil, fmt.Errorf("Local DNS server returned error: %v", resp.Header.RCODE)
-	}
-
-	if len(resp.Answers) == 0 {
-		return nil, fmt.Errorf("Local DNS server returned no answers")
-	}
-
-	return resp.Answers, nil
+	return result, nil
 }
