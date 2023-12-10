@@ -141,21 +141,21 @@ func (dnsr *dnsResolver) ResolveAddress(msg types.DNSMessage) ([]types.DNSAnswer
 		return nil, fmt.Errorf("Cannot read response from local DNS server: %v", err)
 	}
 
-	res := types.DNSMessage{}
-	err = res.Parse(buf[:size])
+	resp := types.DNSMessage{}
+	err = resp.Parse(buf[:size])
 	if err != nil {
 		return nil, fmt.Errorf("Cannot parse response from local DNS server: %v", err)
 	}
 
-	log.Printf("Got responce from DNS server: %+v", res)
+	log.Printf("Got responce from DNS server: %+v for request: %+v", resp, msg)
 
-	if res.Header.RCODE != types.NOERROR {
-		return nil, fmt.Errorf("Local DNS server returned error: %v", res.Header.RCODE)
+	if resp.Header.RCODE != types.NOERROR {
+		return nil, fmt.Errorf("Local DNS server returned error: %v", resp.Header.RCODE)
 	}
 
-	if len(res.Answers) == 0 {
+	if len(resp.Answers) == 0 {
 		return nil, fmt.Errorf("Local DNS server returned no answers")
 	}
 
-	return res.Answers, nil
+	return resp.Answers, nil
 }
