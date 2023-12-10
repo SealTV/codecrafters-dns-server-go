@@ -16,6 +16,7 @@ var (
 func main() {
 	flag.Parse()
 
+	log.Printf("Resolver address: %v", *resloveAddr)
 	resolver, err := GetDNSResolver(*resloveAddr)
 	if err != nil {
 		log.Fatal(err)
